@@ -1,0 +1,6 @@
+[submodule "uxn11"]
+	path = uxn11
+	url = https://git.sr.ht/~rabbits/uxn11
+[submodule "b"]
+	path = b
+	url = https://github.com/tsoding/b

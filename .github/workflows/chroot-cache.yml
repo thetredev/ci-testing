@@ -1,0 +1,48 @@
+name: Test a cached Alpine chroot environment
+
+
+on:
+  workflow_dispatch:
+
+
+# TODO: add jobs that test on different host platforms (windows, aarch64, etc)
+# TODO: build examples with btest on CI
+#   Some of them are interactive so there should be some way to just build things without running them
+
+jobs:
+  btest:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Install/Restore Dependency Cache
+        id: cache-deps
+        uses: awalsh128/cache-apt-pkgs-action@v1
+        with:
+          packages: clang make fasm mingw-w64 wine64 gcc-aarch64-linux-gnu qemu-user
+          version: 1.0 # version of the cache
+
+      - name: Install Rust
+        run: rustup toolchain install stable --no-self-update --profile minimal
+
+      - name: Restore/Create uxncli Cache
+        uses: actions/cache@v4
+        with:
+          key: ${{ env.CACHE_KEY }}
+          path: uxn11/bin
+
+      - name: Install uxncli
+        run: |
+          test "$(which uxncli)" == "$(realpath uxn11/bin)/uxncli" && exit 0
+
+          cd uxn11
+          make cli
+
+      - name: Run Tests
+        run: |
+          cd b
+          make -B
+          PATH=$(realpath uxn11/bin):$PATH ./build/btest
